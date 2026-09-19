@@ -54,7 +54,7 @@ The application is designed to work across:
 
 ## 📱 Application Sections
 
-The final portfolio will contain the following sections:
+The final portfolio contains the following sections:
 
 1. Navigation Bar
 2. Hero Section
@@ -63,7 +63,7 @@ The final portfolio will contain the following sections:
 5. Projects
 6. Experience
 7. Education
-8. Contact
+8. Contact details
 9. Footer
 
 ## 🏗️ Project Structure
