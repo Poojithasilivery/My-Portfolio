@@ -24,6 +24,7 @@ class MyPortfolioApp extends StatelessWidget {
   }
 }
 
+// HOME SCREEN
 class PortfolioHomePage extends StatelessWidget {
   const PortfolioHomePage({super.key});
 
@@ -36,37 +37,74 @@ class PortfolioHomePage extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const ProfileCard(),
-                const SizedBox(height: 20),
+                const CircleAvatar(
+                  radius: 55,
+                  backgroundColor: Colors.indigo,
+                  child: Icon(
+                    Icons.person,
+                    size: 65,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  'My Projects',
+                  'My Name',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Flutter Developer',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Welcome to my portfolio! I am learning Flutter '
+                  'and enjoy creating user-friendly applications.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 28),
+
+                // NAVIGATION BUTTON
+                SizedBox(
+                  width: 230,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const ProjectsPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.folder_open),
+                    label: const Text('View My Projects'),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                Text(
+                  'My Skills',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 12),
-                const ProjectCard(
-                  title: 'Portfolio Website',
-                  description:
-                      'A personal portfolio created using Flutter.',
-                  icon: Icons.web,
-                ),
-                const ProjectCard(
-                  title: 'Student App',
-                  description:
-                      'An application concept for student information.',
-                  icon: Icons.school,
-                ),
-                const ProjectCard(
-                  title: 'UI Design Project',
-                  description:
-                      'A user-friendly interface built with Flutter widgets.',
-                  icon: Icons.design_services,
+                const Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Chip(label: Text('Flutter')),
+                    Chip(label: Text('Dart')),
+                    Chip(label: Text('UI Design')),
+                    Chip(label: Text('Git')),
+                  ],
                 ),
               ],
             ),
@@ -77,45 +115,46 @@ class PortfolioHomePage extends StatelessWidget {
   }
 }
 
-class ProfileCard extends StatelessWidget {
-  const ProfileCard({super.key});
+// PROJECTS SCREEN
+class ProjectsPage extends StatelessWidget {
+  const ProjectsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: const Row(
-          children: [
-            CircleAvatar(
-              radius: 35,
-              child: Icon(Icons.person, size: 40),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'My Name',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text('Flutter Developer'),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Projects'),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ProjectCard(
+            title: 'Portfolio Website',
+            description:
+                'A personal portfolio created using Flutter.',
+            icon: Icons.web,
+          ),
+          ProjectCard(
+            title: 'Student App',
+            description:
+                'An application concept for student information.',
+            icon: Icons.school,
+          ),
+          ProjectCard(
+            title: 'UI Design Project',
+            description:
+                'A user-friendly interface built with Flutter widgets.',
+            icon: Icons.design_services,
+          ),
+        ],
       ),
     );
   }
 }
 
+// REUSABLE PROJECT CARD
 class ProjectCard extends StatelessWidget {
   final String title;
   final String description;
@@ -131,16 +170,22 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 14),
       elevation: 3,
+      margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          child: Icon(icon),
+          backgroundColor: Colors.indigo.shade100,
+          child: Icon(
+            icon,
+            color: Colors.indigo,
+          ),
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8),
@@ -151,5 +196,3 @@ class ProjectCard extends StatelessWidget {
     );
   }
 }
-
- 
