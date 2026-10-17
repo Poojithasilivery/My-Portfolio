@@ -35,106 +35,121 @@ class PortfolioHomePage extends StatelessWidget {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 700;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1000),
-                child: isDesktop
-                    ? const Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: ProfileSection()),
-                          SizedBox(width: 32),
-                          Expanded(child: IntroductionSection()),
-                        ],
-                      )
-                    : const Column(
-                        children: [
-                          ProfileSection(),
-                          SizedBox(height: 24),
-                          IntroductionSection(),
-                        ],
-                      ),
-              ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ProfileCard(),
+                const SizedBox(height: 20),
+                Text(
+                  'My Projects',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 12),
+                const ProjectCard(
+                  title: 'Portfolio Website',
+                  description:
+                      'A personal portfolio created using Flutter.',
+                  icon: Icons.web,
+                ),
+                const ProjectCard(
+                  title: 'Student App',
+                  description:
+                      'An application concept for student information.',
+                  icon: Icons.school,
+                ),
+                const ProjectCard(
+                  title: 'UI Design Project',
+                  description:
+                      'A user-friendly interface built with Flutter widgets.',
+                  icon: Icons.design_services,
+                ),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 }
 
-class ProfileSection extends StatelessWidget {
-  const ProfileSection({super.key});
+class ProfileCard extends StatelessWidget {
+  const ProfileCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const CircleAvatar(
-          radius: 60,
-          backgroundColor: Colors.indigo,
-          child: Icon(
-            Icons.person,
-            size: 70,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'My Name',
-          style: Theme.of(context).textTheme.headlineMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Flutter Developer',
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-class IntroductionSection extends StatelessWidget {
-  const IntroductionSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'About Me',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Hello! I am a student learning Flutter development. '
-          'I enjoy creating applications and learning new technologies.',
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'My Skills',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 12),
-        const Wrap(
-          spacing: 8,
-          runSpacing: 8,
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: const Row(
           children: [
-            Chip(label: Text('Flutter')),
-            Chip(label: Text('Dart')),
-            Chip(label: Text('UI Design')),
-            Chip(label: Text('Git')),
+            CircleAvatar(
+              radius: 35,
+              child: Icon(Icons.person, size: 40),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Name',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text('Flutter Developer'),
+                ],
+              ),
+            ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
+
+class ProjectCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+
+  const ProjectCard({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: 3,
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          child: Icon(icon),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(description),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      ),
+    );
+  }
+}
+
+ 
