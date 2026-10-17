@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,15 +19,72 @@ class MyPortfolioApp extends StatelessWidget {
           seedColor: Colors.indigo,
         ),
         useMaterial3: true,
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+        ),
       ),
       home: const PortfolioHomePage(),
     );
   }
 }
 
-// HOME SCREEN
-class PortfolioHomePage extends StatelessWidget {
+class PortfolioHomePage extends StatefulWidget {
   const PortfolioHomePage({super.key});
+
+  @override
+  State<PortfolioHomePage> createState() =>
+      _PortfolioHomePageState();
+}
+
+class _PortfolioHomePageState extends State<PortfolioHomePage> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _courseController = TextEditingController();
+  final _skillsController = TextEditingController();
+  final _aboutController = TextEditingController();
+
+  String _name = '';
+  String _email = '';
+  String _course = '';
+  String _about = '';
+  List<String> _skills = [];
+
+  void _saveDetails() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _name = _nameController.text.trim();
+      _email = _emailController.text.trim();
+      _course = _courseController.text.trim();
+      _about = _aboutController.text.trim();
+
+      _skills = _skillsController.text
+          .split(',')
+          .map((skill) => skill.trim())
+          .where((skill) => skill.isNotEmpty)
+          .toList();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Portfolio details updated successfully!'),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _courseController.dispose();
+    _skillsController.dispose();
+    _aboutController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,76 +93,124 @@ class PortfolioHomePage extends StatelessWidget {
         title: const Text('My Portfolio'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            tooltip: 'View projects',
+            icon: const Icon(Icons.folder_open),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProjectsPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
+            constraints: const BoxConstraints(maxWidth: 850),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const CircleAvatar(
-                  radius: 55,
-                  backgroundColor: Colors.indigo,
-                  child: Icon(
-                    Icons.person,
-                    size: 65,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'My Name',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Flutter Developer',
-                  style: TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Welcome to my portfolio! I am learning Flutter '
-                  'and enjoy creating user-friendly applications.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
-                ),
+                _buildPortfolioPreview(context),
                 const SizedBox(height: 28),
-
-                // NAVIGATION BUTTON
-                SizedBox(
-                  width: 230,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const ProjectsPage(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.folder_open),
-                    label: const Text('View My Projects'),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
                 Text(
-                  'My Skills',
+                  'Edit Your Details',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 12),
-                const Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    Chip(label: Text('Flutter')),
-                    Chip(label: Text('Dart')),
-                    Chip(label: Text('UI Design')),
-                    Chip(label: Text('Git')),
-                  ],
+                const SizedBox(height: 16),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name',
+                          prefixIcon: Icon(Icons.person),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                        validator: (value) {
+                          final email = value?.trim() ?? '';
+                          final emailPattern =
+                              RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+                          if (!emailPattern.hasMatch(email)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _courseController,
+                        decoration: const InputDecoration(
+                          labelText: 'Course / Qualification',
+                          prefixIcon: Icon(Icons.school),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your course';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _skillsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Skills',
+                          hintText: 'Flutter, Dart, UI Design',
+                          prefixIcon: Icon(Icons.code),
+                          helperText: 'Separate skills with commas',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter at least one skill';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _aboutController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'About Me',
+                          hintText: 'Write a short introduction',
+                          prefixIcon: Icon(Icons.info_outline),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _saveDetails,
+                          icon: const Icon(Icons.save),
+                          label: const Text('Save Details'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -113,9 +219,78 @@ class PortfolioHomePage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildPortfolioPreview(BuildContext context) {
+    final displayName = _name.isEmpty ? 'Your Name' : _name;
+    final displayCourse =
+        _course.isEmpty ? 'Your Course' : _course;
+
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Center(
+              child: CircleAvatar(
+                radius: 42,
+                backgroundColor: Colors.indigo,
+                child: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                displayName,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(child: Text(displayCourse)),
+            if (_email.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Center(child: Text(_email)),
+            ],
+            const Divider(height: 28),
+            Text(
+              'About Me',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _about.isEmpty
+                  ? 'Your introduction will appear here.'
+                  : _about,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'My Skills',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            if (_skills.isEmpty)
+              const Text('Your skills will appear here.')
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _skills
+                    .map((skill) => Chip(label: Text(skill)))
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-// PROJECTS SCREEN
 class ProjectsPage extends StatelessWidget {
   const ProjectsPage({super.key});
 
@@ -132,20 +307,17 @@ class ProjectsPage extends StatelessWidget {
         children: const [
           ProjectCard(
             title: 'Portfolio Website',
-            description:
-                'A personal portfolio created using Flutter.',
+            description: 'A personal portfolio built using Flutter.',
             icon: Icons.web,
           ),
           ProjectCard(
             title: 'Student App',
-            description:
-                'An application concept for student information.',
+            description: 'An application for student information.',
             icon: Icons.school,
           ),
           ProjectCard(
             title: 'UI Design Project',
-            description:
-                'A user-friendly interface built with Flutter widgets.',
+            description: 'A user-friendly interface using Flutter.',
             icon: Icons.design_services,
           ),
         ],
@@ -154,7 +326,6 @@ class ProjectsPage extends StatelessWidget {
   }
 }
 
-// REUSABLE PROJECT CARD
 class ProjectCard extends StatelessWidget {
   final String title;
   final String description;
@@ -170,28 +341,11 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: Colors.indigo.shade100,
-          child: Icon(
-            icon,
-            color: Colors.indigo,
-          ),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(description),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        leading: CircleAvatar(child: Icon(icon)),
+        title: Text(title),
+        subtitle: Text(description),
       ),
     );
   }
