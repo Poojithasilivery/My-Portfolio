@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyPortfolioApp());
@@ -14,11 +15,35 @@ class MyPortfolioApp extends StatefulWidget {
 
 class _MyPortfolioAppState extends State<MyPortfolioApp> {
   bool _isDarkMode = false;
+  bool _themeLoaded = false;
 
-  void _toggleTheme() {
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTheme = prefs.getBool('isDarkMode') ?? false;
+
+    if (!mounted) return;
+
     setState(() {
-      _isDarkMode = !_isDarkMode;
+      _isDarkMode = savedTheme;
+      _themeLoaded = true;
     });
+  }
+
+  Future<void> _toggleTheme() async {
+    final newTheme = !_isDarkMode;
+
+    setState(() {
+      _isDarkMode = newTheme;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', newTheme);
   }
 
   @override
@@ -44,10 +69,14 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
           border: OutlineInputBorder(),
         ),
       ),
-      home: PortfolioHomePage(
-        isDarkMode: _isDarkMode,
-        onToggleTheme: _toggleTheme,
-      ),
+      home: !_themeLoaded
+          ? const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            )
+          : PortfolioHomePage(
+              isDarkMode: _isDarkMode,
+              onToggleTheme: _toggleTheme,
+            ),
     );
   }
 }
@@ -288,7 +317,9 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: widget.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+            tooltip: widget.isDarkMode
+                ? 'Switch to light mode'
+                : 'Switch to dark mode',
             onPressed: widget.onToggleTheme,
             icon: Icon(
               widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -650,7 +681,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
         title: const Text('My Projects'),
         actions: [
           IconButton(
-            tooltip: widget.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+            tooltip: widget.isDarkMode
+                ? 'Switch to light mode'
+                : 'Switch to dark mode',
             onPressed: widget.onToggleTheme,
             icon: Icon(
               widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -677,7 +710,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     const SizedBox(height: 8),
                     Text('Total projects: ${_projects.length}'),
                     const SizedBox(height: 20),
-
                     TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
@@ -705,7 +737,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-
                     if (visibleProjects.isEmpty)
                       Card(
                         child: Padding(
@@ -753,4 +784,5 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 }
+
 
