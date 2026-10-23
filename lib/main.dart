@@ -34,7 +34,6 @@ class PortfolioHomePage extends StatefulWidget {
 
 class _PortfolioHomePageState extends State<PortfolioHomePage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _courseController = TextEditingController();
@@ -57,7 +56,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
       _about = _aboutController.text.trim().isEmpty
           ? 'No introduction added yet.'
           : _aboutController.text.trim();
-
       _skills = _skillsController.text
           .split(',')
           .map((skill) => skill.trim())
@@ -104,7 +102,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 800;
-
           final preview = _buildProfilePreview();
           final form = _buildProfileForm();
 
@@ -139,7 +136,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
 
   Widget _buildProfilePreview() {
     return Card(
-      elevation: 3,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -183,7 +179,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
             ),
             const SizedBox(height: 8),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.email_outlined, size: 20),
                 const SizedBox(width: 8),
@@ -199,9 +194,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _skills
-                  .map((skill) => Chip(label: Text(skill)))
-                  .toList(),
+              children: _skills.map((s) => Chip(label: Text(s))).toList(),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -227,7 +220,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
 
   Widget _buildProfileForm() {
     return Card(
-      elevation: 3,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -245,22 +237,21 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Full Name'),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? 'Please enter your name'
-                        : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Please enter your name'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
                     return 'Please enter your email';
                   }
                   if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                      .hasMatch(value.trim())) {
+                      .hasMatch(v.trim())) {
                     return 'Please enter a valid email';
                   }
                   return null;
@@ -270,10 +261,9 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               TextFormField(
                 controller: _courseController,
                 decoration: const InputDecoration(labelText: 'Course'),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? 'Please enter your course'
-                        : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Please enter your course'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -283,11 +273,9 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   hintText: 'Flutter, Dart, UI Design',
                   helperText: 'Separate skills with commas',
                 ),
-                validator: (value) =>
-                    value == null ||
-                            value.split(',').every(
-                                  (skill) => skill.trim().isEmpty,
-                                )
+                validator: (v) =>
+                    v == null ||
+                            v.split(',').every((s) => s.trim().isEmpty)
                         ? 'Please enter at least one skill'
                         : null,
               ),
@@ -295,10 +283,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               TextFormField(
                 controller: _aboutController,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'About Me',
-                  hintText: 'Write a short introduction',
-                ),
+                decoration: const InputDecoration(labelText: 'About Me'),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -318,9 +303,9 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
 }
 
 class PortfolioProject {
-  final String title;
-  final String description;
-  final String technology;
+  String title;
+  String description;
+  String technology;
 
   PortfolioProject({
     required this.title,
@@ -360,27 +345,76 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ),
   ];
 
-  void _addProject() {
+  int? _editingIndex;
+
+  void _saveProject() {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _projects.add(
-        PortfolioProject(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          technology: _technologyController.text.trim(),
-        ),
+      final project = PortfolioProject(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        technology: _technologyController.text.trim(),
       );
+
+      if (_editingIndex == null) {
+        _projects.add(project);
+      } else {
+        _projects[_editingIndex!] = project;
+      }
     });
 
+    final wasEditing = _editingIndex != null;
+    _clearForm();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          wasEditing ? 'Project updated successfully!' : 'Project added!',
+        ),
+      ),
+    );
+  }
+
+  void _editProject(int index) {
+    final project = _projects[index];
+
+    setState(() {
+      _editingIndex = index;
+      _titleController.text = project.title;
+      _descriptionController.text = project.description;
+      _technologyController.text = project.technology;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit the details and save your changes.')),
+    );
+  }
+
+  void _deleteProject(int index) {
+    final deletedTitle = _projects[index].title;
+
+    setState(() {
+      _projects.removeAt(index);
+
+      if (_editingIndex == index) {
+        _clearForm();
+      } else if (_editingIndex != null && _editingIndex! > index) {
+        _editingIndex = _editingIndex! - 1;
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$deletedTitle deleted')),
+    );
+  }
+
+  void _clearForm() {
+    _formKey.currentState?.reset();
     _titleController.clear();
     _descriptionController.clear();
     _technologyController.clear();
-    FocusScope.of(context).unfocus();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Project added successfully!')),
-    );
+    _editingIndex = null;
   }
 
   @override
@@ -394,9 +428,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Projects'),
-      ),
+      appBar: AppBar(title: const Text('My Projects')),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 800;
@@ -410,7 +442,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Add a New Project',
+                      _editingIndex == null
+                          ? 'Add a New Project'
+                          : 'Edit Project',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -427,8 +461,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 decoration: const InputDecoration(
                                   labelText: 'Project Title',
                                 ),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
+                                validator: (v) =>
+                                    v == null || v.trim().isEmpty
                                         ? 'Enter a project title'
                                         : null,
                               ),
@@ -439,9 +473,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 decoration: const InputDecoration(
                                   labelText: 'Project Description',
                                 ),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
-                                        ? 'Enter a project description'
+                                validator: (v) =>
+                                    v == null || v.trim().isEmpty
+                                        ? 'Enter a description'
                                         : null,
                               ),
                               const SizedBox(height: 12),
@@ -450,19 +484,39 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 decoration: const InputDecoration(
                                   labelText: 'Technology Used',
                                 ),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
+                                validator: (v) =>
+                                    v == null || v.trim().isEmpty
                                         ? 'Enter a technology'
                                         : null,
                               ),
                               const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  onPressed: _addProject,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add Project'),
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: FilledButton.icon(
+                                      onPressed: _saveProject,
+                                      icon: Icon(
+                                        _editingIndex == null
+                                            ? Icons.add
+                                            : Icons.save,
+                                      ),
+                                      label: Text(
+                                        _editingIndex == null
+                                            ? 'Add Project'
+                                            : 'Update Project',
+                                      ),
+                                    ),
+                                  ),
+                                  if (_editingIndex != null) ...[
+                                    const SizedBox(width: 10),
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        setState(_clearForm);
+                                      },
+                                      child: const Text('Cancel'),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
@@ -477,7 +531,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           ),
                     ),
                     const SizedBox(height: 12),
-                    if (isWide)
+                    if (_projects.isEmpty)
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(
+                            child: Text('No projects yet. Add your first one!'),
+                          ),
+                        ),
+                      )
+                    else if (isWide)
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -486,14 +549,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          mainAxisExtent: 175,
+                          mainAxisExtent: 210,
                         ),
                         itemCount: _projects.length,
                         itemBuilder: (context, index) =>
-                            _buildProjectCard(_projects[index]),
+                            _buildProjectCard(index),
                       )
                     else
-                      ..._projects.map(_buildProjectCard),
+                      ...List.generate(
+                        _projects.length,
+                        (index) => _buildProjectCard(index),
+                      ),
                   ],
                 ),
               ),
@@ -504,34 +570,57 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-  Widget _buildProjectCard(PortfolioProject project) {
+  Widget _buildProjectCard(int index) {
+    final project = _projects[index];
+
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.folder_special, size: 30),
+            Row(
+              children: [
+                const Icon(Icons.folder_special, size: 28),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    project.title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Text(
-              project.title,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
+              project.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: Text(
-                project.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Chip(label: Text(project.technology)),
             ),
-            const SizedBox(height: 6),
-            Chip(
-              label: Text(project.technology),
-              visualDensity: VisualDensity.compact,
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _editProject(index),
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _deleteProject(index),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete'),
+                ),
+              ],
             ),
           ],
         ),
@@ -539,4 +628,3 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 }
-
