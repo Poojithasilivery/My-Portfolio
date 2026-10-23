@@ -350,6 +350,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void _saveProject() {
     if (!_formKey.currentState!.validate()) return;
 
+    final wasEditing = _editingIndex != null;
+
     setState(() {
       final project = PortfolioProject(
         title: _titleController.text.trim(),
@@ -362,10 +364,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
       } else {
         _projects[_editingIndex!] = project;
       }
-    });
 
-    final wasEditing = _editingIndex != null;
-    _clearForm();
+      _clearForm();
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -385,14 +386,32 @@ class _ProjectsPageState extends State<ProjectsPage> {
       _descriptionController.text = project.description;
       _technologyController.text = project.technology;
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit the details and save your changes.')),
-    );
   }
 
-  void _deleteProject(int index) {
-    final deletedTitle = _projects[index].title;
+  Future<void> _deleteProject(int index) async {
+    final project = _projects[index];
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Project?'),
+        content: Text(
+          'Are you sure you want to delete "${project.title}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmed != true) return;
 
     setState(() {
       _projects.removeAt(index);
@@ -405,7 +424,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$deletedTitle deleted')),
+      SnackBar(content: Text('${project.title} deleted successfully')),
     );
   }
 
@@ -536,7 +555,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                         child: Padding(
                           padding: EdgeInsets.all(24),
                           child: Center(
-                            child: Text('No projects yet. Add your first one!'),
+                            child: Text(
+                              'No projects yet. Add your first one!',
+                            ),
                           ),
                         ),
                       )
@@ -606,7 +627,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
               alignment: Alignment.centerLeft,
               child: Chip(label: Text(project.technology)),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -628,3 +649,4 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 }
+
