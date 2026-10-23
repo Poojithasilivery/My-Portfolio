@@ -1,19 +1,32 @@
 
-
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyPortfolioApp());
 }
 
-class MyPortfolioApp extends StatelessWidget {
+class MyPortfolioApp extends StatefulWidget {
   const MyPortfolioApp({super.key});
+
+  @override
+  State<MyPortfolioApp> createState() => _MyPortfolioAppState();
+}
+
+class _MyPortfolioAppState extends State<MyPortfolioApp> {
+  bool _isDarkMode = false;
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'My Portfolio',
       debugShowCheckedModeBanner: false,
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
@@ -21,13 +34,33 @@ class MyPortfolioApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      home: const PortfolioHomePage(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+        ),
+      ),
+      home: PortfolioHomePage(
+        isDarkMode: _isDarkMode,
+        onToggleTheme: _toggleTheme,
+      ),
     );
   }
 }
 
 class PortfolioHomePage extends StatefulWidget {
-  const PortfolioHomePage({super.key});
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
+
+  const PortfolioHomePage({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
 
   @override
   State<PortfolioHomePage> createState() => _PortfolioHomePageState();
@@ -35,7 +68,6 @@ class PortfolioHomePage extends StatefulWidget {
 
 class _PortfolioHomePageState extends State<PortfolioHomePage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _courseController = TextEditingController();
@@ -64,19 +96,8 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _courseController.dispose();
-    _skillsController.dispose();
-    _aboutController.dispose();
-    super.dispose();
-  }
-
   Widget _buildProfilePreview() {
     return Card(
-      elevation: 3,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -134,7 +155,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const ProjectsPage(),
+                      builder: (_) => ProjectsPage(
+                        isDarkMode: widget.isDarkMode,
+                        onToggleTheme: widget.onToggleTheme,
+                      ),
                     ),
                   );
                 },
@@ -168,9 +192,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   labelText: 'Full Name',
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Please enter your name'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Please enter your name'
+                        : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -197,9 +222,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   labelText: 'Course / Qualification',
                   prefixIcon: Icon(Icons.school_outlined),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Please enter your course'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Please enter your course'
+                        : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -209,9 +235,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   hintText: 'Flutter, Dart, SQL',
                   prefixIcon: Icon(Icons.code),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Please enter your skills'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Please enter your skills'
+                        : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -222,9 +249,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                   prefixIcon: Icon(Icons.info_outline),
                   alignLabelWithHint: true,
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Please enter a short description'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Please enter a short description'
+                        : null,
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -243,11 +271,30 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _courseController.dispose();
+    _skillsController.dispose();
+    _aboutController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Portfolio'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: widget.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+            onPressed: widget.onToggleTheme,
+            icon: Icon(
+              widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            ),
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -308,7 +355,14 @@ class PortfolioProject {
 }
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({super.key});
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
+
+  const ProjectsPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
@@ -356,7 +410,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void _saveProject() {
     if (!_formKey.currentState!.validate()) return;
 
-    final isEditing = _editingIndex != null;
+    final wasEditing = _editingIndex != null;
 
     setState(() {
       final project = PortfolioProject(
@@ -377,7 +431,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isEditing ? 'Project updated successfully!' : 'Project added successfully!',
+          wasEditing
+              ? 'Project updated successfully!'
+              : 'Project added successfully!',
         ),
       ),
     );
@@ -391,11 +447,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
       _technologyController.text = project.technology;
     });
 
-    Scrollable.ensureVisible(
-      _formKey.currentContext!,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    final formContext = _formKey.currentContext;
+    if (formContext != null) {
+      Scrollable.ensureVisible(
+        formContext,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _clearForm() {
@@ -411,34 +470,33 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Project?'),
-          content: Text(
-            'Are you sure you want to delete "${project.title}"?',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Project?'),
+        content: Text('Are you sure you want to delete "${project.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
 
     if (!mounted || confirmed != true) return;
 
     setState(() {
-      _projects.remove(project);
+      final deletedIndex = _projects.indexOf(project);
+      if (deletedIndex == -1) return;
 
-      if (_editingIndex == index) {
+      _projects.removeAt(deletedIndex);
+
+      if (_editingIndex == deletedIndex) {
         _clearForm();
-      } else if (_editingIndex != null && _editingIndex! > index) {
+      } else if (_editingIndex != null && _editingIndex! > deletedIndex) {
         _editingIndex = _editingIndex! - 1;
       }
     });
@@ -468,9 +526,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   labelText: 'Project Title',
                   prefixIcon: Icon(Icons.title),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Enter a project title'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Enter a project title'
+                        : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -481,9 +540,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   prefixIcon: Icon(Icons.description_outlined),
                   alignLabelWithHint: true,
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Enter a description'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Enter a description'
+                        : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -493,9 +553,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   hintText: 'Flutter, Dart',
                   prefixIcon: Icon(Icons.code),
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Enter the technologies used'
-                    : null,
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? 'Enter the technologies used'
+                        : null,
               ),
               const SizedBox(height: 16),
               Row(
@@ -514,9 +575,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   if (_editingIndex != null) ...[
                     const SizedBox(width: 8),
                     OutlinedButton(
-                      onPressed: () {
-                        setState(_clearForm);
-                      },
+                      onPressed: () => setState(_clearForm),
                       child: const Text('Cancel'),
                     ),
                   ],
@@ -589,6 +648,15 @@ class _ProjectsPageState extends State<ProjectsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Projects'),
+        actions: [
+          IconButton(
+            tooltip: widget.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+            onPressed: widget.onToggleTheme,
+            icon: Icon(
+              widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            ),
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -610,13 +678,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     Text('Total projects: ${_projects.length}'),
                     const SizedBox(height: 20),
 
-                    // Commit 9: Search projects by title, description, or technology.
                     TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         labelText: 'Search projects',
-                        hintText: 'Enter title, description, or technology',
+                        hintText: 'Title, description, or technology',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
@@ -628,14 +695,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 icon: const Icon(Icons.clear),
                               )
                             : null,
-                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _buildProjectForm(),
                     const SizedBox(height: 24),
-
                     Text(
                       'Projects (${visibleProjects.length})',
                       style: Theme.of(context).textTheme.titleLarge,
@@ -689,3 +753,4 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 }
+
