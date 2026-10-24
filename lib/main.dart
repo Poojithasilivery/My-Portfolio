@@ -1,3 +1,4 @@
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,14 +31,44 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
   Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (!mounted) return;
+      final savedMessages = prefs.getString('contactMessages');
+      final loadedMessages = <ContactMessage>[];
 
+      if (savedMessages != null) {
+        final decoded = jsonDecode(savedMessages);
+        if (decoded is List) {
+          for (final item in decoded) {
+            if (item is Map) {
+              loadedMessages.add(
+                ContactMessage.fromJson(Map<String, dynamic>.from(item)),
+              );
+            }
+          }
+        }
+      }
+
+      if (!mounted) return;
       setState(() {
         _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+        _messages
+          ..clear()
+          ..addAll(loadedMessages);
         _themeLoaded = true;
       });
     } catch (_) {
       if (mounted) setState(() => _themeLoaded = true);
+    }
+  }
+
+  Future<void> _saveMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(
+        _messages.map((message) => message.toJson()).toList(),
+      );
+      await prefs.setString('contactMessages', encoded);
+    } catch (_) {
+      // The app remains usable if local storage is unavailable.
     }
   }
 
@@ -76,6 +107,7 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
               isDarkMode: _isDarkMode,
               onToggleTheme: _toggleTheme,
               messages: _messages,
+              onMessagesChanged: _saveMessages,
             ),
     );
   }
@@ -87,12 +119,14 @@ class PortfolioHomePage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
   final List<ContactMessage> messages;
+  final Future<void> Function() onMessagesChanged;
 
   const PortfolioHomePage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
     required this.messages,
+    required this.onMessagesChanged,
   });
 
   @override
@@ -141,6 +175,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
           isDarkMode: widget.isDarkMode,
           onToggleTheme: widget.onToggleTheme,
           messages: widget.messages,
+          onMessagesChanged: widget.onMessagesChanged,
         ),
       ),
     );
@@ -154,6 +189,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
           isDarkMode: widget.isDarkMode,
           onToggleTheme: widget.onToggleTheme,
           messages: widget.messages,
+          onMessagesChanged: widget.onMessagesChanged,
         ),
       ),
     );
@@ -192,6 +228,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               MaterialPageRoute(
                 builder: (_) => MessageHistoryPage(
                   messages: widget.messages,
+                  onMessagesChanged: widget.onMessagesChanged,
                   isDarkMode: widget.isDarkMode,
                   onToggleTheme: widget.onToggleTheme,
                 ),
@@ -270,6 +307,8 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                                 MaterialPageRoute(
                                   builder: (_) => MessageHistoryPage(
                                     messages: widget.messages,
+                                    onMessagesChanged:
+                                        widget.onMessagesChanged,
                                     isDarkMode: widget.isDarkMode,
                                     onToggleTheme: widget.onToggleTheme,
                                   ),
@@ -432,19 +471,20 @@ class PortfolioProject {
     required this.technology,
   });
 }
-
 // ---------------- PROJECT MANAGEMENT ----------------
 
 class ProjectsPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
   final List<ContactMessage> messages;
+  final Future<void> Function() onMessagesChanged;
 
   const ProjectsPage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
     required this.messages,
+    required this.onMessagesChanged,
   });
 
   @override
@@ -595,6 +635,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
               MaterialPageRoute(
                 builder: (_) => MessageHistoryPage(
                   messages: widget.messages,
+                  onMessagesChanged: widget.onMessagesChanged,
                   isDarkMode: widget.isDarkMode,
                   onToggleTheme: widget.onToggleTheme,
                 ),
@@ -707,7 +748,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ),
                     const SizedBox(height: 12),
                     if (projects.isEmpty)
-                      const Center(child: Text('No matching projects found.'))
+                      const Center(
+                        child: Text('No matching projects found.'),
+                      )
                     else if (wide)
                       GridView.builder(
                         shrinkWrap: true,
@@ -816,20 +859,45 @@ class ContactMessage {
     required this.email,
     required this.message,
   }) : sentAt = DateTime.now();
-}
 
+  ContactMessage._({
+    required this.name,
+    required this.email,
+    required this.message,
+    required this.sentAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'email': email,
+        'message': message,
+        'sentAt': sentAt.toIso8601String(),
+      };
+
+  factory ContactMessage.fromJson(Map<String, dynamic> json) {
+    return ContactMessage._(
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+      sentAt: DateTime.tryParse(json['sentAt'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
 // ---------------- CONTACT FORM ----------------
 
 class ContactPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
   final List<ContactMessage> messages;
+  final Future<void> Function() onMessagesChanged;
 
   const ContactPage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
     required this.messages,
+    required this.onMessagesChanged,
   });
 
   @override
@@ -842,7 +910,7 @@ class _ContactPageState extends State<ContactPage> {
   final _emailController = TextEditingController();
   final _messageController = TextEditingController();
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
     final newMessage = ContactMessage(
@@ -854,6 +922,10 @@ class _ContactPageState extends State<ContactPage> {
     setState(() {
       widget.messages.add(newMessage);
     });
+
+    await widget.onMessagesChanged();
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -888,6 +960,7 @@ class _ContactPageState extends State<ContactPage> {
               MaterialPageRoute(
                 builder: (_) => MessageHistoryPage(
                   messages: widget.messages,
+                  onMessagesChanged: widget.onMessagesChanged,
                   isDarkMode: widget.isDarkMode,
                   onToggleTheme: widget.onToggleTheme,
                 ),
@@ -1000,18 +1073,20 @@ class _ContactPageState extends State<ContactPage> {
   }
 }
 
-// ---------------- COMMIT 13: MESSAGE HISTORY ----------------
+// ---------------- COMMIT 14: PERMANENT MESSAGE HISTORY ----------------
 
 class MessageHistoryPage extends StatefulWidget {
   final List<ContactMessage> messages;
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
+  final Future<void> Function() onMessagesChanged;
 
   const MessageHistoryPage({
     super.key,
     required this.messages,
     required this.isDarkMode,
     required this.onToggleTheme,
+    required this.onMessagesChanged,
   });
 
   @override
@@ -1045,6 +1120,10 @@ class _MessageHistoryPageState extends State<MessageHistoryPage> {
     setState(() {
       widget.messages.removeAt(index);
     });
+
+    await widget.onMessagesChanged();
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Message deleted')),
@@ -1109,8 +1188,7 @@ class _MessageHistoryPageState extends State<MessageHistoryPage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     message.name,
@@ -1145,7 +1223,3 @@ class _MessageHistoryPageState extends State<MessageHistoryPage> {
     );
   }
 }
-
-
-
-
