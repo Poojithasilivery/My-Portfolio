@@ -6,9 +6,7 @@ void main() {
   runApp(const MyPortfolioApp());
 }
 
-// --------------------------------------------------
-// APP ROOT: SAVED LIGHT/DARK THEME
-// --------------------------------------------------
+// ---------------- APP ROOT ----------------
 
 class MyPortfolioApp extends StatefulWidget {
   const MyPortfolioApp({super.key});
@@ -21,13 +19,15 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
   bool _isDarkMode = false;
   bool _themeLoaded = false;
 
+  final List<ContactMessage> _messages = [];
+
   @override
   void initState() {
     super.initState();
-    _loadThemePreference();
+    _loadTheme();
   }
 
-  Future<void> _loadThemePreference() async {
+  Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
@@ -37,24 +37,18 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
         _themeLoaded = true;
       });
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _themeLoaded = true);
+      if (mounted) setState(() => _themeLoaded = true);
     }
   }
 
   Future<void> _toggleTheme() async {
-    final newTheme = !_isDarkMode;
-
-    setState(() {
-      _isDarkMode = newTheme;
-    });
+    final newValue = !_isDarkMode;
+    setState(() => _isDarkMode = newValue);
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isDarkMode', newTheme);
-    } catch (_) {
-      // The theme still changes for the current session.
-    }
+      await prefs.setBool('isDarkMode', newValue);
+    } catch (_) {}
   }
 
   @override
@@ -66,9 +60,6 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -76,9 +67,6 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
       ),
       home: !_themeLoaded
           ? const Scaffold(
@@ -87,23 +75,24 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
           : PortfolioHomePage(
               isDarkMode: _isDarkMode,
               onToggleTheme: _toggleTheme,
+              messages: _messages,
             ),
     );
   }
 }
 
-// --------------------------------------------------
-// HOME PAGE: PROFILE EDITING AND LIVE PREVIEW
-// --------------------------------------------------
+// ---------------- PROFILE HOME PAGE ----------------
 
 class PortfolioHomePage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
+  final List<ContactMessage> messages;
 
   const PortfolioHomePage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
+    required this.messages,
   });
 
   @override
@@ -115,16 +104,15 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
 
   final _nameController = TextEditingController(text: 'Your Name');
   final _emailController = TextEditingController(text: 'you@example.com');
-  final _courseController = TextEditingController(text: 'Flutter Developer');
-  final _skillsController =
-      TextEditingController(text: 'Flutter, Dart, SQL');
+  final _roleController = TextEditingController(text: 'Flutter Developer');
+  final _skillsController = TextEditingController(text: 'Flutter, Dart, SQL');
   final _aboutController = TextEditingController(
     text: 'Welcome to my portfolio! I enjoy building useful applications.',
   );
 
   String _name = 'Your Name';
   String _email = 'you@example.com';
-  String _course = 'Flutter Developer';
+  String _role = 'Flutter Developer';
   String _skills = 'Flutter, Dart, SQL';
   String _about =
       'Welcome to my portfolio! I enjoy building useful applications.';
@@ -135,7 +123,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     setState(() {
       _name = _nameController.text.trim();
       _email = _emailController.text.trim();
-      _course = _courseController.text.trim();
+      _role = _roleController.text.trim();
       _skills = _skillsController.text.trim();
       _about = _aboutController.text.trim();
     });
@@ -145,11 +133,37 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
+  void _openProjects() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProjectsPage(
+          isDarkMode: widget.isDarkMode,
+          onToggleTheme: widget.onToggleTheme,
+          messages: widget.messages,
+        ),
+      ),
+    );
+  }
+
+  void _openContact() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContactPage(
+          isDarkMode: widget.isDarkMode,
+          onToggleTheme: widget.onToggleTheme,
+          messages: widget.messages,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _courseController.dispose();
+    _roleController.dispose();
     _skillsController.dispose();
     _aboutController.dispose();
     super.dispose();
@@ -163,50 +177,47 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
         actions: [
           IconButton(
             tooltip: 'Projects',
+            onPressed: _openProjects,
             icon: const Icon(Icons.work_outline),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProjectsPage(
-                    isDarkMode: widget.isDarkMode,
-                    onToggleTheme: widget.onToggleTheme,
-                  ),
-                ),
-              );
-            },
           ),
           IconButton(
-            tooltip: 'Contact Me',
+            tooltip: 'Contact',
+            onPressed: _openContact,
             icon: const Icon(Icons.contact_mail_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ContactPage(
-                    isDarkMode: widget.isDarkMode,
-                    onToggleTheme: widget.onToggleTheme,
-                  ),
-                ),
-              );
-            },
           ),
           IconButton(
-            tooltip: widget.isDarkMode ? 'Light mode' : 'Dark mode',
+            tooltip: 'Message history',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MessageHistoryPage(
+                  messages: widget.messages,
+                  isDarkMode: widget.isDarkMode,
+                  onToggleTheme: widget.onToggleTheme,
+                ),
+              ),
+            ),
+            icon: Badge(
+              label: Text('${widget.messages.length}'),
+              isLabelVisible: widget.messages.isNotEmpty,
+              child: const Icon(Icons.history),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Toggle theme',
+            onPressed: widget.onToggleTheme,
             icon: Icon(
               widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: widget.onToggleTheme,
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 850;
+          final wide = constraints.maxWidth >= 850;
 
-          final profilePreview = _buildProfilePreview(context);
-          final profileForm = _buildProfileForm(context);
+          final preview = _profilePreview(context);
+          final form = _profileForm(context);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -216,74 +227,58 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (isWide)
+                    if (wide)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: profilePreview),
-                          const SizedBox(width: 24),
-                          Expanded(child: profileForm),
+                          Expanded(child: preview),
+                          const SizedBox(width: 20),
+                          Expanded(child: form),
                         ],
                       )
                     else ...[
-                      profilePreview,
+                      preview,
                       const SizedBox(height: 20),
-                      profileForm,
+                      form,
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
-                            const Icon(
-                              Icons.work_outline,
-                              size: 36,
-                              color: Colors.indigo,
-                            ),
+                            const Icon(Icons.work_outline, size: 38),
                             const SizedBox(height: 8),
                             Text(
                               'Explore My Projects',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'View, search, add, edit, or delete projects.',
-                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 12),
                             FilledButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ProjectsPage(
-                                      isDarkMode: widget.isDarkMode,
-                                      onToggleTheme: widget.onToggleTheme,
-                                    ),
-                                  ),
-                                );
-                              },
+                              onPressed: _openProjects,
                               icon: const Icon(Icons.arrow_forward),
                               label: const Text('View Projects'),
                             ),
-                            const SizedBox(height: 8),
                             OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ContactPage(
-                                      isDarkMode: widget.isDarkMode,
-                                      onToggleTheme: widget.onToggleTheme,
-                                    ),
-                                  ),
-                                );
-                              },
+                              onPressed: _openContact,
                               icon: const Icon(Icons.mail_outline),
                               label: const Text('Contact Me'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MessageHistoryPage(
+                                    messages: widget.messages,
+                                    isDarkMode: widget.isDarkMode,
+                                    onToggleTheme: widget.onToggleTheme,
+                                  ),
+                                ),
+                              ),
+                              icon: const Icon(Icons.history),
+                              label: Text(
+                                'Message History (${widget.messages.length})',
+                              ),
                             ),
                           ],
                         ),
@@ -299,7 +294,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  Widget _buildProfilePreview(BuildContext context) {
+  Widget _profilePreview(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -307,30 +302,21 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
           children: [
             const CircleAvatar(
               radius: 48,
-              backgroundColor: Colors.indigo,
-              child: Icon(
-                Icons.person,
-                size: 55,
-                color: Colors.white,
-              ),
+              child: Icon(Icons.person, size: 54),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Text(
               _name,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 6),
-            Text(
-              _course,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(_role, textAlign: TextAlign.center),
             const Divider(height: 28),
-            _detailRow(Icons.email_outlined, _email),
+            _detail(Icons.email_outlined, _email),
             const SizedBox(height: 12),
-            _detailRow(Icons.code, _skills),
-            const SizedBox(height: 16),
+            _detail(Icons.code, _skills),
+            const SizedBox(height: 18),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -349,21 +335,21 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  Widget _detailRow(IconData icon, String value) {
+  Widget _detail(IconData icon, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.indigo),
+        Icon(icon),
         const SizedBox(width: 10),
         Expanded(child: Text(value)),
       ],
     );
   }
 
-  Widget _buildProfileForm(BuildContext context) {
+  Widget _profileForm(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         child: Form(
           key: _formKey,
           child: Column(
@@ -373,88 +359,24 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                 'Edit Profile',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 18),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
+              const SizedBox(height: 16),
+              _profileField(_nameController, 'Name'),
+              _profileField(
+                _emailController,
+                'Email',
+                email: true,
               ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                      .hasMatch(value.trim())) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _courseController,
-                decoration: const InputDecoration(
-                  labelText: 'Role or Course',
-                  prefixIcon: Icon(Icons.school_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your role or course';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _skillsController,
-                decoration: const InputDecoration(
-                  labelText: 'Skills',
-                  hintText: 'Flutter, Dart, SQL',
-                  prefixIcon: Icon(Icons.code),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your skills';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _aboutController,
+              _profileField(_roleController, 'Role or Course'),
+              _profileField(_skillsController, 'Skills'),
+              _profileField(
+                _aboutController,
+                'About Me',
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'About Me',
-                  alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.info_outline),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter some information about yourself';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _saveProfile,
-                icon: const Icon(Icons.save_outlined),
+                icon: const Icon(Icons.save),
                 label: const Text('Save Profile'),
               ),
             ],
@@ -463,11 +385,41 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
       ),
     );
   }
+
+  Widget _profileField(
+    TextEditingController controller,
+    String label, {
+    bool email = false,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        keyboardType:
+            email ? TextInputType.emailAddress : TextInputType.text,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Please enter $label';
+          }
+          if (email &&
+              !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                  .hasMatch(value.trim())) {
+            return 'Enter a valid email address';
+          }
+          return null;
+        },
+      ),
+    );
+  }
 }
 
-// --------------------------------------------------
-// PROJECT MODEL
-// --------------------------------------------------
+// ---------------- PROJECT MODEL ----------------
 
 class PortfolioProject {
   String title;
@@ -481,18 +433,18 @@ class PortfolioProject {
   });
 }
 
-// --------------------------------------------------
-// PROJECTS PAGE: SEARCH, ADD, EDIT, DELETE
-// --------------------------------------------------
+// ---------------- PROJECT MANAGEMENT ----------------
 
 class ProjectsPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
+  final List<ContactMessage> messages;
 
   const ProjectsPage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
+    required this.messages,
   });
 
   @override
@@ -511,24 +463,23 @@ class _ProjectsPageState extends State<ProjectsPage> {
   final List<PortfolioProject> _projects = [
     PortfolioProject(
       title: 'Portfolio Website',
-      description: 'A personal portfolio to display my profile and skills.',
+      description: 'A personal portfolio to showcase my profile and skills.',
       technology: 'Flutter, Dart',
     ),
     PortfolioProject(
       title: 'Employee Management System',
-      description: 'An application to manage employee information.',
+      description: 'An application for managing employee information.',
       technology: 'Flutter, Database',
     ),
     PortfolioProject(
       title: 'Student Dashboard',
-      description: 'A dashboard for viewing student information.',
+      description: 'A dashboard for student information.',
       technology: 'Flutter, UI Design',
     ),
   ];
 
   List<PortfolioProject> get _filteredProjects {
     final query = _searchController.text.trim().toLowerCase();
-
     if (query.isEmpty) return _projects;
 
     return _projects.where((project) {
@@ -549,6 +500,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void _saveProject() {
     if (!_formKey.currentState!.validate()) return;
 
+    final wasEditing = _editingIndex != null;
+
     setState(() {
       final project = PortfolioProject(
         title: _titleController.text.trim(),
@@ -568,69 +521,54 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _editingIndex == null
-              ? 'Project saved successfully!'
-              : 'Project updated successfully!',
+          wasEditing ? 'Project updated!' : 'Project added!',
         ),
       ),
     );
   }
 
   void _editProject(PortfolioProject project) {
-    final index = _projects.indexOf(project);
-
     setState(() {
-      _editingIndex = index;
+      _editingIndex = _projects.indexOf(project);
       _titleController.text = project.title;
       _descriptionController.text = project.description;
       _technologyController.text = project.technology;
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit the fields and save your changes.')),
-    );
   }
 
   Future<void> _deleteProject(PortfolioProject project) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Project?'),
-          content: Text('Delete "${project.title}"? This cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Project?'),
+        content: Text('Delete "${project.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
 
     if (!mounted || confirmed != true) return;
 
     setState(() {
-      final deletedIndex = _projects.indexOf(project);
-      if (deletedIndex == -1) return;
+      final index = _projects.indexOf(project);
+      if (index == -1) return;
 
-      _projects.removeAt(deletedIndex);
+      _projects.removeAt(index);
 
-      if (_editingIndex == deletedIndex) {
+      if (_editingIndex == index) {
         _clearForm();
-      } else if (_editingIndex != null &&
-          _editingIndex! > deletedIndex) {
+      } else if (_editingIndex != null && _editingIndex! > index) {
         _editingIndex = _editingIndex! - 1;
       }
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${project.title} deleted successfully')),
-    );
   }
 
   @override
@@ -644,40 +582,37 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleProjects = _filteredProjects;
+    final projects = _filteredProjects;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Projects'),
         actions: [
           IconButton(
-            tooltip: widget.isDarkMode ? 'Light mode' : 'Dark mode',
+            tooltip: 'Message history',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MessageHistoryPage(
+                  messages: widget.messages,
+                  isDarkMode: widget.isDarkMode,
+                  onToggleTheme: widget.onToggleTheme,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.history),
+          ),
+          IconButton(
+            onPressed: widget.onToggleTheme,
             icon: Icon(
               widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: widget.onToggleTheme,
           ),
-          IconButton(
-            tooltip: 'Contact Me',
-            icon: const Icon(Icons.contact_mail_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ContactPage(
-                    isDarkMode: widget.isDarkMode,
-                    onToggleTheme: widget.onToggleTheme,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 850;
+          final wide = constraints.maxWidth >= 850;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -693,14 +628,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ),
                     const SizedBox(height: 8),
                     Text('Total projects: ${_projects.length}'),
-                    const SizedBox(height: 18),
-
+                    const SizedBox(height: 16),
                     TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         labelText: 'Search projects',
-                        hintText: 'Search title, description, or technology',
+                        hintText: 'Title, description, or technology',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _searchController.text.isEmpty
                             ? null
@@ -715,7 +649,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -728,69 +661,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                 _editingIndex == null
                                     ? 'Add New Project'
                                     : 'Edit Project',
-                                style:
-                                    Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _titleController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Project Title',
-                                  prefixIcon: Icon(Icons.title),
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return 'Enter a project title';
-                                  }
-                                  return null;
-                                },
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 14),
-                              TextFormField(
-                                controller: _descriptionController,
+                              _projectField(_titleController, 'Project Title'),
+                              _projectField(
+                                _descriptionController,
+                                'Description',
                                 maxLines: 3,
-                                decoration: const InputDecoration(
-                                  labelText: 'Description',
-                                  alignLabelWithHint: true,
-                                  prefixIcon: Icon(Icons.description_outlined),
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return 'Enter a description';
-                                  }
-                                  return null;
-                                },
                               ),
-                              const SizedBox(height: 14),
-                              TextFormField(
-                                controller: _technologyController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Technologies Used',
-                                  hintText: 'Flutter, Dart, SQL',
-                                  prefixIcon: Icon(Icons.code),
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return 'Enter the technologies used';
-                                  }
-                                  return null;
-                                },
+                              _projectField(
+                                _technologyController,
+                                'Technologies Used',
                               ),
-                              const SizedBox(height: 18),
                               Wrap(
                                 spacing: 10,
-                                runSpacing: 10,
                                 children: [
                                   FilledButton.icon(
                                     onPressed: _saveProject,
-                                    icon: Icon(
-                                      _editingIndex == null
-                                          ? Icons.add
-                                          : Icons.save,
-                                    ),
+                                    icon: const Icon(Icons.save),
                                     label: Text(
                                       _editingIndex == null
                                           ? 'Add Project'
@@ -811,43 +700,32 @@ class _ProjectsPageState extends State<ProjectsPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
                     Text(
                       'Projects',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-
-                    if (visibleProjects.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(28),
-                        child: Center(
-                          child: Text('No matching projects found.'),
-                        ),
-                      )
-                    else if (isWide)
+                    if (projects.isEmpty)
+                      const Center(child: Text('No matching projects found.'))
+                    else if (wide)
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visibleProjects.length,
+                        itemCount: projects.length,
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 370,
-                          mainAxisExtent: 255,
+                          mainAxisExtent: 260,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                        itemBuilder: (context, index) {
-                          final project = visibleProjects[index];
-                          return _buildProjectCard(project);
-                        },
+                        itemBuilder: (context, index) =>
+                            _projectCard(projects[index]),
                       )
                     else
                       Column(
-                        children: visibleProjects
-                            .map(_buildProjectCard)
-                            .toList(),
+                        children: projects.map(_projectCard).toList(),
                       ),
                   ],
                 ),
@@ -859,39 +737,60 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-  Widget _buildProjectCard(PortfolioProject project) {
+  Widget _projectField(
+    TextEditingController controller,
+    String label, {
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Please enter $label';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _projectCard(PortfolioProject project) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.folder_outlined,
-                size: 34, color: Colors.indigo),
-            const SizedBox(height: 10),
+            const Icon(Icons.folder_outlined, size: 34),
+            const SizedBox(height: 8),
             Text(
               project.title,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(project.description),
-            const SizedBox(height: 10),
-            Text(
-              'Technologies: ${project.technology}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            Text('Technologies: ${project.technology}'),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 4,
               children: [
                 IconButton(
-                  tooltip: 'Edit project',
+                  tooltip: 'Edit',
                   onPressed: () => _editProject(project),
                   icon: const Icon(Icons.edit_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Delete project',
+                  tooltip: 'Delete',
                   onPressed: () => _deleteProject(project),
                   icon: const Icon(Icons.delete_outline),
                 ),
@@ -904,18 +803,33 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 }
 
-// --------------------------------------------------
-// COMMIT 12: CONTACT FORM WITH VALIDATION
-// --------------------------------------------------
+// ---------------- CONTACT MESSAGE MODEL ----------------
+
+class ContactMessage {
+  final String name;
+  final String email;
+  final String message;
+  final DateTime sentAt;
+
+  ContactMessage({
+    required this.name,
+    required this.email,
+    required this.message,
+  }) : sentAt = DateTime.now();
+}
+
+// ---------------- CONTACT FORM ----------------
 
 class ContactPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
+  final List<ContactMessage> messages;
 
   const ContactPage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
+    required this.messages,
   });
 
   @override
@@ -924,7 +838,6 @@ class ContactPage extends StatefulWidget {
 
 class _ContactPageState extends State<ContactPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _messageController = TextEditingController();
@@ -932,9 +845,19 @@ class _ContactPageState extends State<ContactPage> {
   void _submitForm() {
     if (!_formKey.currentState!.validate()) return;
 
+    final newMessage = ContactMessage(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      message: _messageController.text.trim(),
+    );
+
+    setState(() {
+      widget.messages.add(newMessage);
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Contact form submitted successfully!'),
+        content: Text('Message submitted successfully!'),
       ),
     );
 
@@ -959,11 +882,28 @@ class _ContactPageState extends State<ContactPage> {
         title: const Text('Contact Me'),
         actions: [
           IconButton(
-            tooltip: widget.isDarkMode ? 'Light mode' : 'Dark mode',
+            tooltip: 'Message history',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MessageHistoryPage(
+                  messages: widget.messages,
+                  isDarkMode: widget.isDarkMode,
+                  onToggleTheme: widget.onToggleTheme,
+                ),
+              ),
+            ),
+            icon: Badge(
+              label: Text('${widget.messages.length}'),
+              isLabelVisible: widget.messages.isNotEmpty,
+              child: const Icon(Icons.history),
+            ),
+          ),
+          IconButton(
+            onPressed: widget.onToggleTheme,
             icon: Icon(
               widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: widget.onToggleTheme,
           ),
         ],
       ),
@@ -980,11 +920,7 @@ class _ContactPageState extends State<ContactPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.mail_outline,
-                        size: 55,
-                        color: Colors.indigo,
-                      ),
+                      const Icon(Icons.mail_outline, size: 52),
                       const SizedBox(height: 12),
                       Text(
                         'Get in Touch',
@@ -993,77 +929,26 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Fill out the form below to contact me.',
+                        'Fill in the form to submit a message.',
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Your Name',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your name';
-                          }
-                          return null;
-                        },
+                      _contactField(_nameController, 'Your Name'),
+                      _contactField(
+                        _emailController,
+                        'Email Address',
+                        email: true,
                       ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email Address',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your email';
-                          }
-
-                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                              .hasMatch(value.trim())) {
-                            return 'Please enter a valid email address';
-                          }
-
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _messageController,
+                      _contactField(
+                        _messageController,
+                        'Your Message',
                         maxLines: 5,
-                        decoration: const InputDecoration(
-                          labelText: 'Your Message',
-                          alignLabelWithHint: true,
-                          prefixIcon: Icon(Icons.message_outlined),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your message';
-                          }
-
-                          if (value.trim().length < 10) {
-                            return 'Message must contain at least 10 characters';
-                          }
-
-                          return null;
-                        },
                       ),
-                      const SizedBox(height: 24),
-
+                      const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: _submitForm,
                         icon: const Icon(Icons.send),
                         label: const Text('Submit Message'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
                       ),
                     ],
                   ),
@@ -1075,7 +960,192 @@ class _ContactPageState extends State<ContactPage> {
       ),
     );
   }
+
+  Widget _contactField(
+    TextEditingController controller,
+    String label, {
+    bool email = false,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType:
+            email ? TextInputType.emailAddress : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Please enter $label';
+          }
+
+          if (email &&
+              !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                  .hasMatch(value.trim())) {
+            return 'Please enter a valid email address';
+          }
+
+          if (label == 'Your Message' && value.trim().length < 10) {
+            return 'Message must contain at least 10 characters';
+          }
+
+          return null;
+        },
+      ),
+    );
+  }
 }
+
+// ---------------- COMMIT 13: MESSAGE HISTORY ----------------
+
+class MessageHistoryPage extends StatefulWidget {
+  final List<ContactMessage> messages;
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
+
+  const MessageHistoryPage({
+    super.key,
+    required this.messages,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
+
+  @override
+  State<MessageHistoryPage> createState() => _MessageHistoryPageState();
+}
+
+class _MessageHistoryPageState extends State<MessageHistoryPage> {
+  Future<void> _deleteMessage(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Message?'),
+        content: const Text(
+          'Are you sure you want to delete this message?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    setState(() {
+      widget.messages.removeAt(index);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Message deleted')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Message History'),
+        actions: [
+          IconButton(
+            tooltip: 'Toggle theme',
+            onPressed: widget.onToggleTheme,
+            icon: Icon(
+              widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            ),
+          ),
+        ],
+      ),
+      body: widget.messages.isEmpty
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 64),
+                    SizedBox(height: 16),
+                    Text(
+                      'No messages yet',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Submit a message through the contact form to see it here.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.messages.length,
+              itemBuilder: (context, index) {
+                final message = widget.messages[index];
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              child: Icon(Icons.person),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
+                                  ),
+                                  Text(message.email),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Delete message',
+                              onPressed: () => _deleteMessage(index),
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        Text(message.message),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Received: ${message.sentAt.toLocal()}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
 
 
 
