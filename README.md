@@ -10,7 +10,7 @@ EXPERIMENT 1a:
 
 Flutter SDK and Visual Studio Code were installed and configured to develop the application. A new Flutter project named my_portfoliop was created using the Flutter command. The Dart and Flutter extensions were added to VS Code for development. The project structure was created with main.dart as the entry point of the application. Finally, the application was successfully executed in Google Chrome. 
 
-#Experiment 1(b): Dart Language Basics
+### Experiment 1(b): Dart Language Basics
 
 Dart Language Basics is covered through your project code.
 I used:
