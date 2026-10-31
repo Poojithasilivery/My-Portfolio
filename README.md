@@ -31,4 +31,5 @@ In this experiment, basic Flutter widgets were used to design the portfolio appl
 4. Buttons were used to perform actions such as adding projects and navigating between pages.
 5. Icons were used to make the interface more attractive and user-friendly.
 These widgets helped create the basic layout and design of the Flutter portfolio application.
-![Home Page](screenshot/Screenshot(65).png)
+
+![Home Page](images/Screenshot(65).png)
