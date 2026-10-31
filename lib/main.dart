@@ -6,7 +6,7 @@ void main() {
   runApp(const MyPortfolioApp());
 }
 
-// ---------------- PROJECT MODEL ----------------
+// ================= PROJECT MODEL =================
 
 class PortfolioProject {
   String title;
@@ -29,16 +29,21 @@ class PortfolioProject {
       };
 
   factory PortfolioProject.fromJson(Map<String, dynamic> json) {
+    final savedStatus = json['status'] ?? 'Completed';
+
     return PortfolioProject(
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       technologies: json['technologies'] ?? '',
-      status: json['status'] ?? 'Completed',
+      status: ['Planned', 'In Progress', 'Completed']
+              .contains(savedStatus)
+          ? savedStatus
+          : 'Completed',
     );
   }
 }
 
-// ---------------- CONTACT MESSAGE MODEL ----------------
+// ================= MESSAGE MODEL =================
 
 class ContactMessage {
   final String name;
@@ -70,7 +75,7 @@ class ContactMessage {
   }
 }
 
-// ---------------- APP ROOT ----------------
+// ================= MAIN APP =================
 
 class MyPortfolioApp extends StatefulWidget {
   const MyPortfolioApp({super.key});
@@ -82,7 +87,6 @@ class MyPortfolioApp extends StatefulWidget {
 class _MyPortfolioAppState extends State<MyPortfolioApp> {
   bool isDarkMode = false;
   bool isLoaded = false;
-
   final List<ContactMessage> messages = [];
 
   @override
@@ -94,19 +98,20 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
   Future<void> loadAppData() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final savedMessages = prefs.getString('contactMessages');
-    if (savedMessages != null) {
-      try {
-        final List decoded = jsonDecode(savedMessages);
+    try {
+      final saved = prefs.getString('contactMessages');
+      if (saved != null) {
+        final List decoded = jsonDecode(saved);
         messages.addAll(decoded.map(
           (item) => ContactMessage.fromJson(
             Map<String, dynamic>.from(item),
           ),
         ));
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     if (!mounted) return;
+
     setState(() {
       isDarkMode = prefs.getBool('isDarkMode') ?? false;
       isLoaded = true;
@@ -158,7 +163,7 @@ class _MyPortfolioAppState extends State<MyPortfolioApp> {
   }
 }
 
-// ---------------- HOME PAGE ----------------
+// ================= HOME PAGE =================
 
 class PortfolioHomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -208,7 +213,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile updated successfully!')),
+      const SnackBar(content: Text('Profile updated!')),
     );
   }
 
@@ -219,8 +224,6 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
         builder: (_) => ProjectsPage(
           isDarkMode: widget.isDarkMode,
           onToggleTheme: widget.onToggleTheme,
-          messages: widget.messages,
-          onMessagesChanged: widget.onMessagesChanged,
         ),
       ),
     );
@@ -240,14 +243,18 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    roleController.dispose();
-    skillsController.dispose();
-    aboutController.dispose();
-    super.dispose();
+  void openHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MessageHistoryPage(
+          messages: widget.messages,
+          onMessagesChanged: widget.onMessagesChanged,
+          isDarkMode: widget.isDarkMode,
+          onToggleTheme: widget.onToggleTheme,
+        ),
+      ),
+    );
   }
 
   Widget profileField(
@@ -265,9 +272,21 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
           border: const OutlineInputBorder(),
         ),
         validator: (value) =>
-            value == null || value.trim().isEmpty ? 'Enter $label' : null,
+            value == null || value.trim().isEmpty
+                ? 'Enter $label'
+                : null,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    roleController.dispose();
+    skillsController.dispose();
+    aboutController.dispose();
+    super.dispose();
   }
 
   @override
@@ -277,28 +296,18 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
         title: const Text('My Portfolio'),
         actions: [
           IconButton(
-            tooltip: 'Projects',
             onPressed: openProjects,
+            tooltip: 'Projects',
             icon: const Icon(Icons.work_outline),
           ),
           IconButton(
-            tooltip: 'Contact',
             onPressed: openContact,
-            icon: const Icon(Icons.contact_mail_outlined),
+            tooltip: 'Contact',
+            icon: const Icon(Icons.mail_outline),
           ),
           IconButton(
+            onPressed: openHistory,
             tooltip: 'Message history',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MessageHistoryPage(
-                  messages: widget.messages,
-                  onMessagesChanged: widget.onMessagesChanged,
-                  isDarkMode: widget.isDarkMode,
-                  onToggleTheme: widget.onToggleTheme,
-                ),
-              ),
-            ),
             icon: Badge(
               isLabelVisible: widget.messages.isNotEmpty,
               label: Text('${widget.messages.length}'),
@@ -321,8 +330,8 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               child: Column(
                 children: [
                   const CircleAvatar(
-                    radius: 48,
-                    child: Icon(Icons.person, size: 52),
+                    radius: 45,
+                    child: Icon(Icons.person, size: 50),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -331,10 +340,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    role,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text(role),
                   const Divider(height: 28),
                   Text(email),
                   const SizedBox(height: 12),
@@ -346,7 +352,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
             ),
           );
 
-          final form = Card(
+          final editor = Card(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -363,7 +369,11 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                     profileField(emailController, 'Email'),
                     profileField(roleController, 'Role'),
                     profileField(skillsController, 'Skills'),
-                    profileField(aboutController, 'About Me', maxLines: 3),
+                    profileField(
+                      aboutController,
+                      'About Me',
+                      maxLines: 3,
+                    ),
                     FilledButton.icon(
                       onPressed: saveProfile,
                       icon: const Icon(Icons.save),
@@ -389,13 +399,13 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                         children: [
                           Expanded(child: preview),
                           const SizedBox(width: 20),
-                          Expanded(child: form),
+                          Expanded(child: editor),
                         ],
                       )
                     else ...[
                       preview,
                       const SizedBox(height: 16),
-                      form,
+                      editor,
                     ],
                     const SizedBox(height: 16),
                     Card(
@@ -423,7 +433,7 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                           ],
                         ),
                       ),
-                    ),
+                                        ),
                   ],
                 ),
               ),
@@ -435,20 +445,16 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
   }
 }
 
-// ---------------- COMMIT 15: PERMANENT PROJECT STORAGE ----------------
+// ================= PROJECTS PAGE =================
 
 class ProjectsPage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
-  final List<ContactMessage> messages;
-  final Future<void> Function() onMessagesChanged;
 
   const ProjectsPage({
     super.key,
     required this.isDarkMode,
     required this.onToggleTheme,
-    required this.messages,
-    required this.onMessagesChanged,
   });
 
   @override
@@ -458,15 +464,23 @@ class ProjectsPage extends StatefulWidget {
 class _ProjectsPageState extends State<ProjectsPage> {
   static const String storageKey = 'portfolioProjects';
 
+  final formKey = GlobalKey<FormState>();
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   final technologiesController = TextEditingController();
 
-  final formKey = GlobalKey<FormState>();
+  final List<String> statuses = [
+    'Planned',
+    'In Progress',
+    'Completed',
+  ];
 
   List<PortfolioProject> projects = [];
   bool isLoading = true;
+
   int? editingIndex;
+  String selectedStatus = 'Completed';
+  String statusFilter = 'All';
   String searchText = '';
 
   @override
@@ -478,10 +492,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Future<void> loadProjects() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedProjects = prefs.getString(storageKey);
+      final saved = prefs.getString(storageKey);
 
-      if (savedProjects != null) {
-        final List decoded = jsonDecode(savedProjects);
+      if (saved != null) {
+        final List decoded = jsonDecode(saved);
         projects = decoded
             .map(
               (item) => PortfolioProject.fromJson(
@@ -493,24 +507,22 @@ class _ProjectsPageState extends State<ProjectsPage> {
         projects = [
           PortfolioProject(
             title: 'Portfolio Website',
-            description:
-                'A responsive portfolio to showcase my profile and work.',
+            description: 'A responsive website to showcase my work.',
             technologies: 'Flutter, Dart',
           ),
           PortfolioProject(
             title: 'Employee Management System',
-            description:
-                'An application to manage employee details and attendance.',
+            description: 'An app to manage employee information.',
             technologies: 'HTML, CSS, JavaScript',
+            status: 'In Progress',
           ),
           PortfolioProject(
             title: 'Data Analytics Project',
-            description:
-                'A project for analyzing data and discovering useful patterns.',
+            description: 'Analyze data and discover useful patterns.',
             technologies: 'Python, Pandas',
+            status: 'Planned',
           ),
         ];
-
         await saveProjects();
       }
     } catch (_) {
@@ -524,16 +536,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Future<void> saveProjects() async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(
-      projects.map((project) => project.toJson()).toList(),
+    await prefs.setString(
+      storageKey,
+      jsonEncode(projects.map((p) => p.toJson()).toList()),
     );
-    await prefs.setString(storageKey, encoded);
   }
 
   void clearForm() {
     titleController.clear();
     descriptionController.clear();
     technologiesController.clear();
+    selectedStatus = 'Completed';
     editingIndex = null;
   }
 
@@ -544,8 +557,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
       title: titleController.text.trim(),
       description: descriptionController.text.trim(),
       technologies: technologiesController.text.trim(),
-      status: 'Completed',
+      status: selectedStatus,
     );
+
+    final wasEditing = editingIndex != null;
 
     setState(() {
       if (editingIndex == null) {
@@ -553,19 +568,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
       } else {
         projects[editingIndex!] = project;
       }
+      clearForm();
     });
 
     await saveProjects();
 
     if (!mounted) return;
-    setState(clearForm);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          editingIndex == null
-              ? 'Project saved permanently!'
-              : 'Project updated permanently!',
+          wasEditing
+              ? 'Project updated and saved!'
+              : 'Project added and saved!',
         ),
       ),
     );
@@ -579,6 +594,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       titleController.text = project.title;
       descriptionController.text = project.description;
       technologiesController.text = project.technologies;
+      selectedStatus = project.status;
     });
 
     Scrollable.ensureVisible(
@@ -592,9 +608,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Project?'),
-        content: const Text(
-          'This project will be removed permanently.',
-        ),
+        content: const Text('This project will be deleted permanently.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -612,15 +626,32 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
     setState(() {
       projects.removeAt(index);
-      clearForm();
+      if (editingIndex == index) {
+        clearForm();
+      } else if (editingIndex != null && editingIndex! > index) {
+        editingIndex = editingIndex! - 1;
+      }
     });
 
     await saveProjects();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Project deleted permanently')),
+      const SnackBar(content: Text('Project deleted!')),
     );
+  }
+
+  Color statusColor(String status) {
+    switch (status) {
+      case 'Planned':
+        return Colors.orange;
+      case 'In Progress':
+        return Colors.blue;
+      case 'Completed':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -635,9 +666,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Widget build(BuildContext context) {
     final filteredProjects = projects.where((project) {
       final query = searchText.toLowerCase();
-      return project.title.toLowerCase().contains(query) ||
+
+      final matchesSearch =
+          project.title.toLowerCase().contains(query) ||
           project.description.toLowerCase().contains(query) ||
           project.technologies.toLowerCase().contains(query);
+
+      final matchesStatus =
+          statusFilter == 'All' || project.status == statusFilter;
+
+      return matchesSearch && matchesStatus;
     }).toList();
 
     return Scaffold(
@@ -658,10 +696,37 @@ class _ProjectsPageState extends State<ProjectsPage> {
               padding: const EdgeInsets.all(20),
               children: [
                 Text(
-                  'Manage Projects',
+                  'Project Dashboard',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),
+
+                // Project status summary
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _summaryCard('Total', projects.length, Colors.indigo),
+                    _summaryCard(
+                      'Planned',
+                      projects.where((p) => p.status == 'Planned').length,
+                      Colors.orange,
+                    ),
+                    _summaryCard(
+                      'In Progress',
+                      projects.where((p) => p.status == 'In Progress').length,
+                      Colors.blue,
+                    ),
+                    _summaryCard(
+                      'Completed',
+                      projects.where((p) => p.status == 'Completed').length,
+                      Colors.green,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Search
                 TextField(
                   onChanged: (value) => setState(() => searchText = value),
                   decoration: const InputDecoration(
@@ -670,7 +735,32 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // Status filter
+                DropdownButtonFormField<String>(
+                  value: statusFilter,
+                  decoration: const InputDecoration(
+                    labelText: 'Filter by status',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['All', ...statuses]
+                      .map(
+                        (status) => DropdownMenuItem(
+                          value: status,
+                          child: Text(status),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => statusFilter = value);
+                    }
+                  },
+                ),
                 const SizedBox(height: 20),
+
+                // Add/edit project form
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -714,13 +804,34 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           TextFormField(
                             controller: technologiesController,
                             decoration: const InputDecoration(
-                              labelText: 'Technologies Used',
+                              labelText: 'Technologies (comma separated)',
                               border: OutlineInputBorder(),
                             ),
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
                                     ? 'Enter technologies'
                                     : null,
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: selectedStatus,
+                            decoration: const InputDecoration(
+                              labelText: 'Project Status',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: statuses
+                                .map(
+                                  (status) => DropdownMenuItem(
+                                    value: status,
+                                    child: Text(status),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => selectedStatus = value);
+                              }
+                            },
                           ),
                           const SizedBox(height: 16),
                           FilledButton.icon(
@@ -745,18 +856,23 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
                 Text(
-                  'Saved Projects (${filteredProjects.length})',
+                  'Projects (${filteredProjects.length})',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
+
                 if (filteredProjects.isEmpty)
                   const Card(
                     child: Padding(
                       padding: EdgeInsets.all(24),
-                      child: Center(child: Text('No projects found.')),
+                      child: Center(
+                        child: Text('No projects match your filter.'),
+                      ),
                     ),
                   ),
+
                 ...filteredProjects.map((project) {
                   final originalIndex = projects.indexOf(project);
 
@@ -774,9 +890,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                               Expanded(
                                 child: Text(
                                   project.title,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge,
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
                               ),
                               PopupMenuButton<String>(
@@ -808,15 +922,21 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             runSpacing: 8,
                             children: project.technologies
                                 .split(',')
-                                .map((technology) => Chip(
-                                      label: Text(technology.trim()),
-                                    ))
+                                .map(
+                                  (technology) => Chip(
+                                    label: Text(technology.trim()),
+                                  ),
+                                )
                                 .toList(),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Status: ${project.status}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          Chip(
+                            avatar: Icon(
+                              Icons.circle,
+                              size: 12,
+                              color: statusColor(project.status),
+                            ),
+                            label: Text(project.status),
                           ),
                         ],
                       ),
@@ -827,9 +947,34 @@ class _ProjectsPageState extends State<ProjectsPage> {
             ),
     );
   }
+
+  Widget _summaryCard(String label, int count, Color color) {
+    return SizedBox(
+      width: 145,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(label, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// ---------------- CONTACT PAGE ----------------
+// ================= CONTACT PAGE =================
 
 class ContactPage extends StatefulWidget {
   final bool isDarkMode;
@@ -858,13 +1003,16 @@ class _ContactPageState extends State<ContactPage> {
   Future<void> submitForm() async {
     if (!formKey.currentState!.validate()) return;
 
-    final newMessage = ContactMessage(
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      message: messageController.text.trim(),
-    );
+    setState(() {
+      widget.messages.add(
+        ContactMessage(
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          message: messageController.text.trim(),
+        ),
+      );
+    });
 
-    setState(() => widget.messages.add(newMessage));
     await widget.onMessagesChanged();
 
     if (!mounted) return;
@@ -879,18 +1027,10 @@ class _ContactPageState extends State<ContactPage> {
     formKey.currentState!.reset();
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    messageController.dispose();
-    super.dispose();
-  }
-
   Widget contactField(
     TextEditingController controller,
     String label, {
-    bool email = false,
+    bool isEmail = false,
     int maxLines = 1,
   }) {
     return Padding(
@@ -899,7 +1039,7 @@ class _ContactPageState extends State<ContactPage> {
         controller: controller,
         maxLines: maxLines,
         keyboardType:
-            email ? TextInputType.emailAddress : TextInputType.text,
+            isEmail ? TextInputType.emailAddress : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -909,20 +1049,28 @@ class _ContactPageState extends State<ContactPage> {
             return 'Please enter $label';
           }
 
-          if (email &&
+          if (isEmail &&
               !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                   .hasMatch(value.trim())) {
-            return 'Enter a valid email address';
+            return 'Enter a valid email';
           }
 
           if (label == 'Your Message' && value.trim().length < 10) {
-            return 'Message must contain at least 10 characters';
+            return 'Message must be at least 10 characters';
           }
 
           return null;
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    messageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -938,7 +1086,6 @@ class _ContactPageState extends State<ContactPage> {
             ),
           ),
           IconButton(
-            tooltip: 'Message history',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -974,17 +1121,12 @@ class _ContactPageState extends State<ContactPage> {
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Fill in the form to submit a message.',
-                        textAlign: TextAlign.center,
-                      ),
                       const SizedBox(height: 24),
                       contactField(nameController, 'Your Name'),
                       contactField(
                         emailController,
                         'Email Address',
-                        email: true,
+                        isEmail: true,
                       ),
                       contactField(
                         messageController,
@@ -1008,7 +1150,7 @@ class _ContactPageState extends State<ContactPage> {
   }
 }
 
-// ---------------- MESSAGE HISTORY ----------------
+// ================= MESSAGE HISTORY =================
 
 class MessageHistoryPage extends StatefulWidget {
   final List<ContactMessage> messages;
@@ -1130,7 +1272,6 @@ class _MessageHistoryPageState extends State<MessageHistoryPage> {
                               ),
                             ),
                             IconButton(
-                              tooltip: 'Delete message',
                               onPressed: () => deleteMessage(index),
                               icon: const Icon(Icons.delete_outline),
                             ),

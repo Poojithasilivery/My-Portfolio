@@ -10,6 +10,7 @@ EXPERIMENT 1a:
 
 Flutter SDK and Visual Studio Code were installed and configured to develop the application. A new Flutter project named my_portfoliop was created using the Flutter command. The Dart and Flutter extensions were added to VS Code for development. The project structure was created with main.dart as the entry point of the application. Finally, the application was successfully executed in Google Chrome. 
 
+<<<<<<< HEAD
 Experiment 1(b): Dart Language Basics
 
 Dart Language Basics is covered through your project code.
@@ -32,3 +33,12 @@ In this experiment, basic Flutter widgets were used to design the portfolio appl
 5. Icons were used to make the interface more attractive and user-friendly.
 These widgets helped create the basic layout and design of the Flutter portfolio application.
 ![Home Page](screenshot/Screenshot(65).png)
+=======
+
+![ProjectScreenshot](images/screenshot1)
+![ProjectScreenshot2](images/screenshot2)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+>>>>>>> 604423103387db99be4bc197f1a9ed31e555f3e2
