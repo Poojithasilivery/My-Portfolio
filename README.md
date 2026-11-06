@@ -33,3 +33,25 @@ In this experiment, basic Flutter widgets were used to design the portfolio appl
 These widgets helped create the basic layout and design of the Flutter portfolio application.
 
 ![Home Page](images/Screenshot(65).png)
+
+![Home Page](images/Screenshot(66).png)
+
+![Home Page](images/Screenshot(67).png)
+
+![Home Page](images/Screenshot(68).png)
+
+![Home Page](images/Screenshot(69).png)
+
+![Home Page](images/Screenshot(70).png)
+
+![Home Page](images/Screenshot(71).png)
+
+![Home Page](images/Screenshot(72).png)
+
+![Home Page](images/Screenshot(73).png)
+
+![Home Page](images/Screenshot(74).png)
+
+![Home Page](images/Screenshot(75).png)
+
+![Home Page](images/Screenshot(76).png)
