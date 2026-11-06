@@ -34,9 +34,9 @@ These widgets helped create the basic layout and design of the Flutter portfolio
 
 ![Home Page](images/Screenshot(65).png)
 
-![Page1](images/Screenshot (66).png)
+![Page1](images/Screenshot(66).png)
 
-![Page2](images/Screenshot (67).png)
+![Page2](images/Screenshot(67).png)
 
 ![Page3](images/Screenshot (68).png)
 
