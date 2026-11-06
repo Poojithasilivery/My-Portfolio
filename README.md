@@ -34,24 +34,24 @@ These widgets helped create the basic layout and design of the Flutter portfolio
 
 ![Home Page](images/Screenshot(65).png)
 
-![Home Page](images/Screenshot(66).png)
+![Page1](images/Screenshot (66).png)
 
-![Home Page](images/Screenshot(67).png)
+![Page2](images/Screenshot (67).png)
 
-![Home Page](images/Screenshot(68).png)
+![Page3](images/Screenshot (68).png)
 
-![Home Page](images/Screenshot(69).png)
+![Page4](images/Screenshot (69).png)
 
-![Home Page](images/Screenshot(70).png)
+![Page5](images/Screenshot (70).png)
 
-![Home Page](images/Screenshot(71).png)
+![Page6](images/Screenshot (71).png)
 
-![Home Page](images/Screenshot(72).png)
+![Page7](images/Screenshot (72).png)
 
-![Home Page](images/Screenshot(73).png)
+![Page8](images/Screenshot (73).png)
 
-![Home Page](images/Screenshot(74).png)
+![Page9](images/Screenshot (74).png)
 
-![Home Page](images/Screenshot(75).png)
+![Page10](images/Screenshot (75).png)
 
-![Home Page](images/Screenshot(76).png)
+![Page11](images/Screenshot (76).png)
